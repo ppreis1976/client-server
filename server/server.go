@@ -80,11 +80,17 @@ func main() {
 		ctx, cancel = context.WithTimeout(ctx, 10*time.Millisecond)
 		defer cancel()
 
-		_, err = stmt.Exec(time.Now(), quote.Usdbrl.Bid)
+		_, err = stmt.ExecContext(ctx, time.Now(), quote.Usdbrl.Bid)
 		if err != nil {
-			fmt.Println(err)
-
-			http.Error(w, "failed to persist currency quote", http.StatusInternalServerError)
+			if ctx.Err() == context.DeadlineExceeded {
+				// O timeout foi atingido
+				fmt.Println("Timeout na execução da instrução SQL")
+				http.Error(w, "Timeout na execução da instrução SQL", http.StatusInternalServerError)
+			} else {
+				// Outro erro ocorreu
+				fmt.Println(err)
+				http.Error(w, "Falha ao persistir a cotação da moeda", http.StatusInternalServerError)
+			}
 			return
 		}
 

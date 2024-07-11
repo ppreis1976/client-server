@@ -43,7 +43,13 @@ func main() {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("unexpected status code: %d", resp.StatusCode)
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bodyString := string(bodyBytes)
+
+		log.Fatalf("unexpected status code: %d - Error: %s", resp.StatusCode, bodyString)
 	}
 
 	var quote CurrencyValueResponse
